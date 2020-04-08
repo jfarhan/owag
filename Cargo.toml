@@ -8,3 +8,9 @@ edition = "2018"
 
 [dependencies]
 tiled="0.9.1"
+
+[dependencies.sdl2]
+version="0.33"
+default-features=false
+features=["ttf","image","gfx","mixer"]
+
