@@ -1,4 +1,3 @@
-pub mod camera;
-pub mod world;
-pub mod entity;
-pub mod loader;
+pub mod ecs;
+pub mod utils;
+pub mod renderer;
