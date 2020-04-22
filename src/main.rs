@@ -23,21 +23,14 @@ fn main() {
     let mut textures:Vec<sdl2::render::Texture>=Vec::new();
 
 
-
+/*
     // Entity Initialisations
     let mut time_manager=std::time::Instant::now();
     let mut manager=ComponentMap::new();
     let player=manager.create_new_entity();
     let enemy=manager.create_new_entity();
-    //let enemy2=manager.create_new_entity();
-    //let enemy3=manager.create_new_entity();
-    //let enemy4=manager.create_new_entity();
     manager.pos_components(&enemy).x=300.0;
     manager.pos_components(&enemy).y=300.0;
-    //manager.pos_components(&enemy2).x=600.0;
-    //manager.pos_components(&enemy2).y=600.0;
-    //manager.pos_components(&enemy3).x=800.0;
-    //manager.pos_components(&enemy3).y=800.0;
     manager.pos_components(&player).x=100.0;
     manager.pos_components(&player).y=100.0;
 
@@ -45,9 +38,23 @@ fn main() {
     loader::load_texture(&mut textures,&texture_creator,"assets/sprites/npc.png");
     loader::load_player(&mut manager,&player);
     loader::load_enemy(&mut manager,&enemy);
-    //loader::load_enemy(&mut manager,&enemy2);
-    //loader::load_enemy(&mut manager,&enemy3);
-    //loader::load_enemy(&mut manager,&enemy4);
+*/
+    let mut ball=owag::utils::physics_engine::PhysicsObject::new();
+    ball.position.x=100.0;
+    ball.position.y=100.0;
+    ball.velocity.x=1.0;
+    ball.velocity.y=0.0;
+    ball.collision_bound.radius=25.0;
+    ball.mass=100.0;
+    //ball.acceleration.y=0.09;
+
+    let mut ball_1=owag::utils::physics_engine::PhysicsObject::new();
+    ball_1.position.x=500.0;
+    ball_1.position.y=100.0;
+    ball_1.velocity.x=-2.3;
+    ball_1.velocity.y=0.0;
+    ball_1.collision_bound.radius=25.0;
+    //ball_1.acceleration.y=0.09;
     let mut running =true;
 
 
@@ -65,15 +72,28 @@ fn main() {
               }
           }
 
-        let keypresses:HashSet<Keycode>=events.keyboard_state()
-                                            .pressed_scancodes()
-                                            .filter_map(Keycode::from_scancode)
-                                            .collect();
-        resolve(keypresses,&mut manager,&player);
-        update(&mut manager,&player);
-        render(&mut canvas,&mut manager,&textures,& mut time_manager);
+         canvas.fill_rect(sdl2::rect::Rect::new(ball.position.x as i32+(ball.collision_bound.radius/2.0) as i32,
+                                                ball.position.y as i32+(ball.collision_bound.radius/2.0) as i32
+                                            ,(ball.collision_bound.radius*2.0) as u32
+                                            ,(ball.collision_bound.radius*2.0) as u32));
+        canvas.set_draw_color(Color::RGB(100,100,100));
+
+        canvas.fill_rect(sdl2::rect::Rect::new(ball_1.position.x as i32+(ball_1.collision_bound.radius/2.0) as i32
+                                            ,ball_1.position.y as i32 + (ball_1.collision_bound.radius/2.0) as i32
+                                            ,(ball_1.collision_bound.radius*2.0) as u32
+                                            ,(ball_1.collision_bound.radius*2.0) as u32));
+
+
+        ball_1.velocity=ball_1.velocity + ball_1.acceleration;
+        ball.velocity=ball.velocity + ball.acceleration;
+        ball_1.position =  ball_1.position + ball_1.velocity ;
+        ball.position   =  ball.position   + ball.velocity   ;
         canvas.present();
+        if owag::utils::physics_engine::PhysicsEngine::collision_check(&ball,&ball_1){
+            owag::utils::physics_engine::PhysicsEngine::resolve_collisions(&mut ball,&mut ball_1)
         }
+        std::thread::sleep_ms(16);
+    }
 }
 
 
@@ -82,18 +102,18 @@ fn main() {
 
 
 fn resolve(keys:HashSet<sdl2::keyboard::Keycode>,manager:&mut ComponentMap,player:&Entity){
-    let phys_comps=manager.pos_components(player);
+    //let phys_comps=manager.pos_components(player);
     if keys.contains(&Keycode::Up){
-        phys_comps.y-=0.3
+
     }
     if keys.contains(&Keycode::Down){
-        phys_comps.y+=0.3
+        //phys_comps.y+=0.3
     }
     if keys.contains(&Keycode::Left){
-        phys_comps.x-=0.3
+        //phys_comps.x-=0.3
     }
     if keys.contains(&Keycode::Right){
-        phys_comps.x+=0.3
+        //phys_comps.x+=0.3
     }
 }
 
@@ -111,34 +131,11 @@ fn render(canvas:&mut Canvas<Window>
         cond=true;
         }
 
-    for anim in 0..manager.anim_states.len()
-    {
-        let mut frame=manager.anim_states[anim].get_frame();
-        if cond{
-                frame=manager.anim_states[anim].next_frame();
-                println!("// Debug : main.rs : 89 time_diff : CHANGE_FRAME_w_CC");
-            }
-            canvas.copy(&textures[manager.anim_states[anim].texture_id]
-                    , Rect::new(frame.0,frame.1,16,16)
-                    , Rect::new(manager.position_components[anim].x as i32
-                    ,manager.position_components[anim].y as i32,64,64)).unwrap();
-    }
-
 }
 
 
 fn update(manager:&mut ComponentMap,player:&Entity){
-    let player_index=player.index;
-    (0..manager.position_components.len()).for_each(|m|{
-        if m!=player_index{
-            let diff_vec_Y=manager.pos_components(&player).y-manager.position_components[m].y;
-            let diff_vec_X=manager.pos_components(&player).x-manager.position_components[m].x;
-            let modulus=(diff_vec_X*diff_vec_X + diff_vec_Y*diff_vec_Y).sqrt();
-            manager.position_components[m].x+=0.1*diff_vec_X/modulus;
-            manager.position_components[m].y+=0.1*diff_vec_Y/modulus;
-        }
-    });
-    manager.collider_update();
+
 }
 
 
@@ -159,8 +156,6 @@ pub mod loader{
             state:0,
             texture_id:0
         };
-        manager.colliders[entity.index].width=16.0;
-        manager.colliders[entity.index].height=16.0;
     }
 
     pub fn load_enemy(manager:&mut ComponentMap,entity:&Entity){
@@ -173,8 +168,7 @@ pub mod loader{
             state:0,
             texture_id:1
         };
-        manager.colliders[entity.index].width=16.0;
-        manager.colliders[entity.index].height=16.0;
+
     }
 
 
