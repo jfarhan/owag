@@ -2,10 +2,7 @@ use crate::utils::math::Vector2;
 pub trait Collidable{
     fn collision_params(&self)->[f32];
 }
-pub struct PhysicsEngine{
-    pub gravity:f32,
-    pub restitution:f32,
-}
+
 pub struct PhysicsObject{
     pub collision_bound:circle_colliders::CollisionCircle,
     pub position : Vector2,
@@ -26,6 +23,10 @@ impl PhysicsObject{
 }
 
 
+pub struct PhysicsEngine{
+    pub gravity:f32,
+    pub restitution:f32,
+}
 
 impl PhysicsEngine{
 
@@ -54,16 +55,23 @@ impl PhysicsEngine{
         obj1.velocity.y=v1_y;
         obj2.velocity.x=v2_x;
         obj2.velocity.y=v2_y;
-        let mod_diff_vec=(obj1.position-obj2.position);
-        obj1.position=obj1.position+mod_diff_vec*0.25;
-        obj2.position=obj2.position-mod_diff_vec*0.25;
+        let mod_diff_vec=obj1.position-obj2.position;
+        let modulus=mod_diff_vec.modulus();
+        let change=obj1.collision_bound.radius+obj2.collision_bound.radius-modulus;
+        obj1.position=obj1.position+mod_diff_vec*(change/(2.0*modulus));
+        obj2.position=obj2.position-mod_diff_vec*(change/(2.0*modulus));
     }
 
     fn get_restn_coeff(_obj1:&PhysicsObject,_obj2:&PhysicsObject)->f32{
-        1.0
+            1.0
     }
 
-
+    pub fn get_display_format(obj:&PhysicsObject)->(i32,i32,u32,u32){
+        ((obj.position.x-obj.collision_bound.radius) as i32
+        ,(obj.position.y-obj.collision_bound.radius) as i32
+        ,(obj.collision_bound.radius*2.0) as u32
+        ,(obj.collision_bound.radius*2.0) as u32)
+    }
 }
 
 pub mod circle_colliders{

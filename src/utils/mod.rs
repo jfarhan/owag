@@ -1,4 +1,7 @@
+use crate::prelude::InteractionParams;
 pub mod physics_engine;
+pub mod interactions;
+pub mod structures;
 
 
 pub mod math{
@@ -10,6 +13,9 @@ pub mod math{
     impl Vector2{
         pub fn new()->Vector2{
             Vector2{x:0.0,y:0.0}
+        }
+        pub fn modulus(&self)->f32{
+            (self.x*self.x+self.y*self.y).sqrt()
         }
     }
 
@@ -41,7 +47,7 @@ pub mod math{
             }
         }
     }
-    
+
     impl core::ops::Div<f32> for Vector2{
         type Output=Vector2;
         fn div(self,cons:f32) -> <Self as std::ops::Mul<f32>>::Output {
@@ -54,38 +60,16 @@ pub mod math{
 }
 
 
-pub mod physics{
-    pub trait Collider{
-        fn collide(&self,other:&ColliderBox)->bool;
-    }
 
-    pub struct ColliderBox{
-        pub x:f32,
-        pub y:f32,
-        pub width:f32,
-        pub height:f32
-    }
-    impl ColliderBox{
-        pub fn new()->ColliderBox{
-            ColliderBox{
-            x:0.0,
-            y:0.0,
-            width:0.0,
-            height:0.0
-            }
+
+
+impl interactions::Interactable for physics_engine::PhysicsObject{
+    fn interaction_params(&self) -> crate::prelude::InteractionParams {
+        InteractionParams{
+            x:self.position.x,
+            y:self.position.y,
+            width:self.collision_bound.radius,
+            height:self.collision_bound.radius
         }
     }
-
-
-    impl  ColliderBox{
-        pub fn collide(&self,other:&Self)->bool{
-            let x_diff=self.x-other.x;
-            let y_diff =self.y-other.y;
-            let width_sum=self.width+other.width;
-            let height_sum=self.height+other.height;
-            if x_diff.abs()<width_sum && y_diff.abs()<height_sum{true}
-            else {false}
-         }
-    }
-
 }
